@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script type="text/javascript" src="script.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <title>Hang Him Game</title>
+</head>
+<body>
+  <section class="under-modal">
+    <section id="jeux">
+      <h1>HANG HIM GAME</h1>
+      <div id="jeux-container">
+      </div>
+      <form action="" id="input-form" name="pendu" method="get">
+        <input type="text" id="input-letter" name="input-letter" maxlength="1">
+        <input type="submit" value="Valider">
+      </form>
+    </section>
+  </section>
+
+</body>
+
+<script type="text/javascript">
+  /*
+1. Récupération du mot
+2. SI WIN est vrai => affiche Bravo tu as gagné
+   SINON SI LOOSE est vrai => affiche Dommage, tu as perdu
+   SINON:
+          3. Show le mot sur l'écran
+          4. L'utilisateur écrit une lettre
+          5. On compare l'input avec le contenu du mot
+                s'il y a un match => win
+                    SI la longueur du mot > 0 => on retire la/les lettres du mot et on revient à l'étape 4
+                    SINON WIN = TRUE
+                s'il n'y a pas de match => loose
+                    SI essaies > 0 => nombres d'essaies -1 et on revient à l'étape 4
+                    SINON LOOSE = TRUE
+*/
+
+// Selection aléatoire d'un mot dans une liste
+
+const wordList = [
+  "Love",
+  "Happiness",
+  "Peace",
+  "Concombre",
+  "Etonnement",
+  "Fruit",
+  "Etoile",
+  "College",
+  "Encore",
+  "Systeme",
+  "Eleve",
+  "Voiture",
+  "Musique",
+  "Sortie",
+  "Javascript",
+  "Ordonnance",
+  "Perserverance",
+  "Competence",
+  "Zoo",
+  "Kayak"
+];
+
+const randomIndex = Math.floor(Math.random() * wordList.length);
+let selectedWord = wordList[randomIndex].toUpperCase();
+let wordArray = selectedWord.split("");
+
+/**
+ * createElement allows you to create element with tag's name, class' name and attributes.
+ * You need to define attributeList before using this function with an array in an array
+ *
+ *    attributesList = [
+ *      ["attribute's name", "value"]
+ *    ]
+ *
+ * @param {*} nameOfTag
+ * @param {*} [classesName=null]
+ * @param {*} [attributesList=null]
+ * @return {*}
+ */
+
+function createElement(nameOfTag, classesName = null, attributesList = null) {
+  const newElement = document.createElement(nameOfTag);
+
+  if (classesName != null) {
+    newElement.classList.add(classesName);
+  }
+
+  if (attributesList != null) {
+    for (let i = 0; i < attributesList.length; i++) {
+      newElement.setAttribute(attributesList[i][0], attributesList[i][1]);
+    }
+  }
+
+  return newElement;
+}
+
+
+
+let tries = 10;
+let sessionStatus = null;
+let lettersAlreadyPlayed = [];
+
+function showWord() {
+  const elemJeuxContainer = document.getElementById("jeux-container");
+
+  for (let i = 0; i < selectedWord.length; i++) {
+    const createUnkownDiv = createElement("div", "letter-" + i);
+    const createKnownDiv = createElement("div", "hidden-letter-" + i);
+    createUnkownDiv.innerHTML = "<p>*</p>";
+    createKnownDiv.innerHTML = "<p>" + selectedWord[i] + "</p>";
+    elemJeuxContainer.appendChild(createUnkownDiv);
+    elemJeuxContainer.appendChild(createKnownDiv);
+    document.getElementsByClassName("letter-" + i)[0].classList.add("letter");
+    document
+      .getElementsByClassName("hidden-letter-" + i)[0]
+      .classList.add("hidden");
+  }
+  return elemJeuxContainer;
+}
+showWord();
+
+// Affichage de la solution
+const elemJeux = document.getElementById("jeux");
+const numberOfTriesDiv = createElement("div", "numberOfTries");
+numberOfTriesDiv.innerHTML = "<h3>Nombre d'essaies: " + tries + "</h3>";
+elemJeux.appendChild(numberOfTriesDiv);
+
+// Affichage des lettres jouées
+const lettersPlayedDiv = createElement("div", "lettersPlayed");
+lettersPlayedDiv.innerHTML = "<h3>Lettre déjà jouées: </h3>";
+elemJeux.appendChild(lettersPlayedDiv);
+
+/**
+ * getIndexOfLetter will return selectedWord indexes of userInputValue or an empty array
+ *
+ *
+ * @param {*} letter
+ * @param {*} string
+ * @return {*}
+ */
+
+function getIndexOfLetter(letter, word) {
+  const letterIndex = [];
+  let i = -1;
+  while ((i = word.indexOf(letter, i + 1)) >= 0) letterIndex.push(i);
+  return letterIndex;
+}
+
+const selectedForm = document.getElementById("input-form");
+const getUserInput = document.getElementById("input-letter");
+
+// Création du bouton replay
+
+const replayButtonAttributes = [
+  ["type", "submit"],
+  ["id", "Replay"],
+  ["value", "Rejouer"],
+  ["onclick", "replay(this)"]
+]
+
+const createReplayInput = createElement("input", "hidden", replayButtonAttributes);
+elemJeux.appendChild(createReplayInput);
+
+
+// console.log(test);
+
+selectedForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!getUserInput.value) {
+    alert("Veuillez entrer une lettre");
+  }
+  let userInputValue = getUserInput.value.toUpperCase();
+  getUserInput.value = "";
+
+  lettersAlreadyPlayed.push(userInputValue);
+
+  console.log(lettersAlreadyPlayed);
+
+  //On ajoute les lettres jouées
+  lettersPlayedDiv.innerHTML += "<p> " + userInputValue + " </p>";
+
+  let compareLetter = getIndexOfLetter(userInputValue, selectedWord);
+  console.log(compareLetter.keys);
+
+  if (compareLetter.length > 0) {
+    if (compareLetter.length === 1) {
+      const allClassElem = document.getElementsByClassName(
+        "hidden-letter-" + compareLetter[0]
+      )[0];
+      const allClassElem2 = document.getElementsByClassName(
+        "letter-" + compareLetter[0]
+      )[0];
+
+      allClassElem.classList.remove("hidden");
+      allClassElem2.classList.add("hidden");
+    }
+    for (let i = 0; i < compareLetter.length; i++) {
+      const allClassElem = document.getElementsByClassName(
+        "hidden-letter-" + compareLetter[i]
+      )[0];
+      const allClassElem2 = document.getElementsByClassName(
+        "letter-" + compareLetter[i]
+      )[0];
+
+      allClassElem.classList.remove("hidden");
+      allClassElem2.classList.add("hidden");
+    }
+
+    // Redéfinition du Tableau des lettres
+    wordArray = wordArray.map(function (val, i) {
+      return val === userInputValue ? null : val;
+    });
+
+    const allEqual = (anotherArray) =>
+      anotherArray.every((v) => v === anotherArray[0]);
+
+    if (allEqual(wordArray) === true) {
+      sessionStatus = "victory";
+      document.getElementById("jeux-container").remove();
+      document.getElementById("input-form").remove();
+      document.getElementsByClassName("lettersPlayed")[0].classList.add("hidden");
+
+      document.getElementById("Replay").classList.remove("hidden");
+
+      const victoryDiv = document.createElement("div");
+      numberOfTriesDiv.innerHTML = "<h3>Bravo vous avez gagné</h3>";
+      elemJeux.appendChild(victoryDiv);
+
+      console.log(elemJeux);
+    }
+  } else {
+    tries--;
+    if (tries !== 0) {
+      numberOfTriesDiv.innerHTML = "<h3>Nombre d'essaies: " + tries + "</h3>";
+    } else {
+      sessionStatus = "defeat";
+      document.getElementById("jeux-container").remove();
+      document.getElementById("input-form").remove();
+      document.getElementsByClassName("lettersPlayed")[0].classList.add("hidden");
+
+      document.getElementById("Replay").classList.remove("hidden");
+
+      const deafeatDiv = document.createElement("div");
+      numberOfTriesDiv.innerHTML = "<h3>Dommage vous avez perdu</h3>";
+
+      const revealWordDiv = document.createElement("div");
+      revealWordDiv.innerHTML = "<h3>Le mot à trouver était: </h3>" + selectedWord;
+
+      elemJeux.appendChild(deafeatDiv);
+      elemJeux.appendChild(revealWordDiv);
+    }
+  }
+});
+
+function replay() {
+  window.location.reload("Replay");
+}
+
+
+</script>
+</html>
